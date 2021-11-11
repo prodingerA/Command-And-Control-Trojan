@@ -1,54 +1,31 @@
-import socket
-import threading
-import base64
-import re
-import json
+from aiohttp import web
+import asyncio
+from aiohttp_session import setup, get_session
+from asyncio.base_events import _ipaddr_info
+import requests
 
-conn_list={}
-def bots_reciver():
-    global conn_list
-    HOST = ''                 # Symbolic name meaning all available interfaces
-    PORT = 12000            # Arbitrary non-privileged port
-    global count
-    s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((HOST, PORT))
-    s.listen(1)
-    while True:
-        conn, addr = s.accept()
-        mac=""
-        if conn:
-            mac=conn.recv(4098).decode('utf-8')
-            if mac:
-                test=(base64.b64decode(mac).decode('utf-8'))
-                if re.match("^0x",test):
-                    if mac in conn_list:
-                        pass
-                    else:
-                        conn_list[mac]=conn
-                else:
-                    mac=test
-                threading.Thread(target=manager,args=(mac,)).start()
-                
-def manager(mac):
-    H = 'localhost'    # The remote host
-    P = 5000               # The same port as used by the server
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as a:
-        a.connect((H,P))
-        a.sendall(bytes(mac, 'utf-8'))
-        while True:
-            work=a.recv(2048).decode('utf-8')
-            work=json.loads(work)
-            keys=list(work.keys())[0]
-            msg=work[keys]
-            sendagain=sender(conn_list[keys],msg)
-            if sendagain:
-                a.sendall(sendagain)
-            else:
-                a.sendall(b'Dead')
+def upload_file():
+    test_file = open ('my_file.txt', 'rb')
+    test_url = "http://localhost:8080"
+    test_response = requests.post(test_url, files = {"form_field_name": test_file})
+    if test_response.ok:
+        print("Upload completed successfully!")
+        print(test_response.text)
+    else:
+        print("Something went wrong!")
 
-def sender(conn,msg):
-    conn.sendall(bytes(msg, 'utf-8'))
-    return conn.recv(64000)
+async def handle(request):
+    name = request.match_info.get('name', 'Virus')
+    print('Connection created: ' + request.remote)
+    return web.Response(text=name)
 
-bots_reciver()
+app = web.Application()
+app.add_routes([web.get('/', handle),
+                web.get('/{name}', handle)])
+
+if __name__ == '__main__':
+    web.run_app(app)
+    upload_file()  
+    
+
+
