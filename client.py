@@ -4,6 +4,8 @@ import asyncio
 import urllib.request
 import time
 import subprocess
+from contextlib import contextmanager
+import sys, os
 
 def download():
     nurl = 'http://localhost:8080/script2.py'
@@ -12,7 +14,6 @@ def download():
 async def main():
     async with aiohttp.ClientSession(trust_env=True) as session:
         download()
-        #time.sleep(1)  
         subprocess.Popen("script2.py 1", shell=True)
 
 loop = asyncio.get_event_loop()

